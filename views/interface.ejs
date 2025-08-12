@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <% if (chats.length > 0) { %>
+        <ul>
+            <% chats.forEach(chat => { %>
+                <li><%= chat.email %></li>
+                <a href="/chat/<%= chat._id %>">Chat</a>
+            <% }) %>
+        </ul>
+    <% } else { %>
+        <p>No conversations found. Start a new conversation below.</p>
+    <% } %>
+
+    <form action="/start-chat" method="POST">
+        <input type="email" name="Email" required />
+        <button type="submit">Start</button>
+    </form>
+</body>
+</html>
