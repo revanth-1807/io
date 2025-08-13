@@ -13,12 +13,14 @@ const dayjs=require('dayjs');
 const utc=require('dayjs/plugin/utc');
 const timezone=require('dayjs/plugin/timezone');
 const Chat=require('./models/Chat');
+const path = require('path');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const User=require('./models/User')
 const store=new Mongodbstore({
-    uri:process.env.M,
+    uri:process.env.MONGODB_URI
+,
     collection:'session'
 })
 store.on('error',function(error){
@@ -80,7 +82,8 @@ app.get('/logout',(req,res)=>{
 const server=http.createServer(app);
 const io=new Server(server);
 
-mongoose.connect(process.env.M)
+mongoose.connect(process.env.MONGODB_URI
+)
 .then(
     console.log('Database connected successfully')
 )
@@ -277,6 +280,8 @@ io.on('connection',(socket)=>{
         console.log('User disconnected');
     })
 })
-server.listen(7777,()=>{
-    console.log('Server is running on port 7777');
-})
+const PORT = process.env.PORT || 7777;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
