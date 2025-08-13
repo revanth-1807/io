@@ -1,35 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Login - Study Space</title>
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #f0f0f0;
       text-align: center;
       padding: 50px;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    }
+    form {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 350px;
+      margin: auto;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(5px);
     }
     input {
       padding: 10px;
-      margin: 10px;
-      width: 250px;
+      margin: 10px 0;
+      width: 90%;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #f0f0f0;
+      font-size: 16px;
+      outline: none;
+      transition: 0.3s;
+    }
+    input::placeholder {
+      color: #ccc;
+    }
+    input:focus {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
     }
     button {
       padding: 10px 20px;
-      margin-top: 20px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: linear-gradient(45deg, #0072ff, #00c6ff);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    }
+    p {
+      margin-top: 15px;
+      color: #bbb;
+    }
+    a {
+      color: #00c6ff;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+    a:hover {
+      text-decoration: underline;
+      color: #00e6ff;
     }
   </style>
 </head>
 <body>
-  <h1>Register to Study Space</h1>
+  <h1>Login to Study Space</h1>
 
-  <form action="/register" method="POST">
+  <form action="/login" method="POST">
     <input type="text" name="Name" placeholder="Enter your Name" required /><br>
     <input type="email" name="Email" placeholder="Enter your email" required /><br>
     <input type="password" name="Password" placeholder="Enter your password" required /><br>
     <input type="password" name="ConfirmPassword" placeholder="Enter ConfirmPassword" required><br>
     <button type="submit">register</button>
   </form>
-
   <p>Already have an account? <a href="/login">Login here</a></p>
 </body>
 </html>
+

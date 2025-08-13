@@ -43,6 +43,7 @@ app.use(
 )
 
 app.set('view engine','ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 function isAuth(req,res,next){
     if(req.session.user){
@@ -64,10 +65,17 @@ app.get('/register',(req,res)=>{
     res.render('register');
 })
 
-app.get('/index',(req,res)=>{
-    res.render('index');
-})
 
+app.get('/logout',(req,res)=>{
+    req.session.destroy((err)=>{
+        if(err){
+            console.error('Error destroying session:', err);
+            return res.status(500).send('Error logging out');
+        }
+        res.clearCookie('connect.sid'); // Clear the session cookie
+        res.redirect('/login');
+    });
+});
 
 const server=http.createServer(app);
 const io=new Server(server);
@@ -204,7 +212,7 @@ app.post('/start-chat',async (req,res)=>{
             res.redirect(`/chat/${ou._id}`);
         }
         else{
-                  return res.send('<script>alert("User not found");window.location="/interface";</script>');
+            return res.send('<script>alert("User not found");window.location="/interface";</script>');
         }
     }
     catch(err){
@@ -242,8 +250,8 @@ catch(err){
 })
 
 io.on('connection',(socket)=>{
-    socket.on('joinroom',({userId,otheruserId})=>{
-        const roomName=[userId,otheruserId].sort().join('_');
+    socket.on('joinRoom',({userId,otherUserId})=>{
+        const roomName=[userId,otherUserId].sort().join('_');
         socket.join(roomName);
     })
     socket.on('chatMessage',async ({senderId,receiverId,message})=>{
@@ -259,8 +267,8 @@ io.on('connection',(socket)=>{
 
         const roomName=[senderId,receiverId].sort().join('_');
         io.to(roomName).emit('message',{
-            senderId,
-            receiverId,
+            sender:senderId,
+            receiver:receiverId,
             message,
             timestamp: newChat.timestamp
         })

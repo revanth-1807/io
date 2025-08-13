@@ -1,25 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chats</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #a{
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        /* color: white; */
+        /* text-decoration: none;
+        background-color: #08393e; */
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+  </style>
 </head>
-<body>
-    <% if (chats.length > 0) { %>
-        <ul>
-            <% chats.forEach(chat => { %>
-                <li><%= chat.email %></li>
-                <a href="/chat/<%= chat._id %>">Chat</a>
-            <% }) %>
-        </ul>
-    <% } else { %>
-        <p>No conversations found. Start a new conversation below.</p>
-    <% } %>
+<a href="\logout" id="a" class="text-indigo-300 hover:text-indigo-400 transition font-medium underline">logout</a>
+<body class="bg-[#111b21] text-gray-200 h-screen overflow-hidden font-sans">
 
-    <form action="/start-chat" method="POST">
-        <input type="email" name="Email" required />
-        <button type="submit">Start</button>
-    </form>
+<div class="flex flex-col md:flex-row h-full">
+
+  <!-- Left Sidebar (Chats List) -->
+  <div class="w-full md:w-1/3 lg:w-1/4 bg-[#202c33] border-b md:border-b-0 md:border-r border-gray-700 flex flex-col">
+    
+    <!-- Header -->
+    <div class="p-4 border-b border-gray-700 font-bold text-lg">
+      Chats
+    </div>
+
+    <!-- Chat List -->
+    <div class="overflow-y-auto flex-1">
+      <% if (chats.length > 0) { %>
+        <% chats.forEach(chat => { %>
+          <a href="/chat/<%= chat._id %>" 
+             class="flex items-center gap-3 p-3 hover:bg-[#2a3942] transition border-b border-gray-700">
+            <div class="w-12 h-12 bg-gray-500 rounded-full flex-shrink-0"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between">
+                <span class="font-medium truncate"><%= chat.email %></span>
+                <span class="text-xs text-green-400">Now</span>
+              </div>
+              <p class="text-sm text-gray-400 truncate">Last message preview...</p>
+            </div>
+          </a>
+        <% }) %>
+      <% } else { %>
+        <div class="p-4 text-gray-500">No conversations found.</div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <!-- Right Chat/Start Panel -->
+  <div class="w-full md:flex-1 flex flex-col items-center justify-center bg-[#111b21] p-6">
+    <div class="text-center max-w-md">
+      <img src="https://play-lh.googleusercontent.com/cav4Zi9SkQUwUJojEWURqJjjqLfA9u_3ckh9p5Q6WQdhVQvnuRDGGCIe-_mYkPsLiqZe=w600-h300-pc0xffffff-pd"
+     class="w-24 mx-auto mb-6 opacity-60" />
+      <h1 class="text-2xl font-light mb-2">Start a New Conversation</h1>
+      <p class="text-gray-400 mb-6">Send and receive messages without keeping your phone online.</p>
+      <form action="/start-chat" method="POST" class="flex flex-col sm:flex-row gap-3">
+        <input type="email" name="Email" placeholder="Enter email..." required 
+               class="px-4 py-2 rounded-lg bg-[#202c33] text-gray-200 focus:outline-none focus:ring focus:ring-green-500 flex-1" />
+        <button type="submit" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white">
+          Start
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
 </body>
 </html>

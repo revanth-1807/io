@@ -1,117 +1,185 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat with <%= chatUser.Name %></title>
+  <title>Chat with <%= chatUser.Name %>
+  </title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="/socket.io/socket.io.js"></script>
 </head>
-<body>
-  <header>
-    <div>
-      <h1>Chat with <%= chatUser.Name %></h1>
-      <a href="/interface">Back</a>
+
+<body
+  class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-gray-950/80 backdrop-blur-md shadow sticky top-0 z-30 border-b border-gray-800">
+    <div class="container mx-auto flex justify-between items-center py-4 px-6">
+      <h1 class="text-2xl font-extrabold tracking-wide select-none text-indigo-400">
+        Chat with <%= chatUser.Name %>
+      </h1>
+      <a href="/interface" class="text-indigo-300 hover:text-indigo-400 transition font-medium underline">Back</a>
     </div>
   </header>
-  <main>
-    <div id="message-container">
-      <% if (messages.length > 0) { %>
-        <% messages.forEach(m => { %>
-          <% const isSentByCurrentUser = m.sender.toString() === currentUser._id.toString(); %>
-          <div style="align-self: <%= isSentByCurrentUser ? 'flex-end' : 'flex-start' %>;">
-            <div title="<%= isSentByCurrentUser ? 'You' : chatUser.Name %>">
-              <%= isSentByCurrentUser ? currentUser.Name.charAt(0).toUpperCase() : chatUser.Name.charAt(0).toUpperCase() %>
-            </div>
 
-            <div>
-              <div><%= m.message %></div>
-              <div>
-                <%= new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+  <!-- Chat container -->
+  <main class="flex flex-col flex-grow max-w-4xl mx-auto w-full p-4 md:p-6">
+    <!-- Messages Area -->
+    <div id="message-container"
+      class="flex flex-col gap-3 p-4 bg-gray-900 rounded-2xl shadow-lg overflow-y-auto flex-grow max-h-[75vh] border border-gray-800"
+      style="scroll-behavior: smooth;">
+      <% if (messages.length> 0) { %>
+        <% messages.forEach(m=> { %>
+          <% const isSentByCurrentUser=m.sender.toString()===currentUser._id.toString(); %>
+            <div class="flex items-end gap-3 max-w-[80%] animate-fade-in"
+              style="align-self: <%= isSentByCurrentUser ? 'flex-end' : 'flex-start' %>;">
+              <!-- Avatar -->
+              <div class="w-10 h-10 font-bold rounded-full flex items-center justify-center select-none shadow-lg
+                     <%= isSentByCurrentUser ? 'bg-indigo-500 text-white' : 'bg-gray-700 text-gray-200' %>"
+                title="<%= isSentByCurrentUser ? 'You' : chatUser.Name %>">
+                <%= isSentByCurrentUser ? currentUser.Name.charAt(0).toUpperCase() :
+                  chatUser.Name.charAt(0).toUpperCase() %>
+              </div>
+
+              <!-- Message bubble -->
+              <div class="relative rounded-2xl px-5 py-3 text-sm shadow-md border border-gray-800
+                     <%= isSentByCurrentUser ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-100' %>"
+                style="word-break: break-word;">
+                <div>
+                  <%= m.message %>
+                </div>
+                <div class="text-xs mt-1 opacity-60 italic select-none">
+                  <%= new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit' }) %>
+                </div>
               </div>
             </div>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <p>No messages yet. Start the conversation!</p>
-      <% } %>
+            <% }) %>
+              <% } else { %>
+                <p class="text-center text-gray-500 italic mt-8 select-none">No messages yet. Start the conversation!
+                </p>
+                <% } %>
     </div>
 
-
-    <form id="chat-form">
-      <input
-        id="message-input"
-        type="text"
-        placeholder="Type your message..."
-        autocomplete="off"
-        required
-      />
-      <button type="submit" aria-label="Send message">Send</button>
+    <!-- Message Input -->
+    <form id="chat-form"
+      class="mt-4 flex gap-3 sticky bottom-0 bg-gray-900 py-3 px-4 rounded-2xl border border-gray-800 shadow-lg max-w-4xl mx-auto">
+      <input id="message-input" type="text" placeholder="Type your message..." autocomplete="off" required
+        class="flex-grow bg-gray-800 border border-gray-700 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-gray-100 placeholder-gray-500" />
+      <button type="submit"
+        class="bg-indigo-600 text-white rounded-full px-6 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-shadow shadow-md"
+        aria-label="Send message">
+        Send
+      </button>
     </form>
   </main>
 
-<script>
-  const socket = io();
-  const cuid = '<%= currentUser._id %>';
-  const chuid = '<%= chatUser._id %>';
-  const cui = '<%= currentUser.Name.charAt(0).toUpperCase() %>';
-  const chui = '<%= chatUser.Name.charAt(0).toUpperCase() %>';
+  <script>
+    const socket = io();
 
-  socket.emit('joinroom', { userId: cuid, otheruserId: chuid });
-  const messageContainer = document.getElementById('message-container');
-  const chatForm = document.getElementById('chat-form');
-  const messageInput = document.getElementById('message-input');
+    const currentUserId = '<%= currentUser._id %>';
+    const chatUserId = '<%= chatUser._id %>';
+    const currentUserInitial = '<%= currentUser.Name.charAt(0).toUpperCase() %>';
+    const chatUserInitial = '<%= chatUser.Name.charAt(0).toUpperCase() %>';
+    const chatUserName = '<%= chatUser.Name %>';
 
-  function appendMessage(data) {
-    const isSentByCurrentUser = data.senderId === cuid;
+    socket.emit('joinRoom', { userId: currentUserId, otherUserId: chatUserId });
 
-    const wrapper = document.createElement('div');
-    wrapper.style.alignSelf = isSentByCurrentUser ? 'flex-end' : 'flex-start';
+    const messageContainer = document.getElementById('message-container');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
 
-    const avatar = document.createElement('div');
-    avatar.title = isSentByCurrentUser ? 'You' : '<%= chatUser.Name %>';
-    avatar.textContent = isSentByCurrentUser ? cui : chui;
-
-    const bubble = document.createElement('div');
-
-    const messageText = document.createElement('div');
-    messageText.textContent = data.message;
-
-    const timestamp = document.createElement('div');
-    const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    timestamp.textContent = time;
-
-    bubble.appendChild(messageText);
-    bubble.appendChild(timestamp);
-
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(bubble);
-    messageContainer.appendChild(wrapper);
-    messageContainer.scrollTop = messageContainer.scrollHeight;
-  }
-
-  chatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const message = messageInput.value.trim();
-    if (!message) return;
-
-    socket.emit('chatMessage', {
-      senderId: cuid,
-      receiverId: chuid,
-      message
-    });
-    messageInput.value = '';
-    messageInput.focus();
-  });
-
-  socket.on('message', (data) => {
-    if ((data.senderId === cuid && data.receiverId === chuid) ||
-        (data.senderId === chuid && data.receiverId === cuid)) {
-      appendMessage(data);
-    }
-  });
-
+    function scrollToBottomInstant() {
   messageContainer.scrollTop = messageContainer.scrollHeight;
-</script>
+}
 
+    function appendMessage(data) {
+      const isSentByCurrentUser = data.sender === currentUserId;
+
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('flex', 'items-end', 'gap-3', 'max-w-[80%]', 'animate-fade-in');
+      wrapper.style.alignSelf = isSentByCurrentUser ? 'flex-end' : 'flex-start';
+
+      const avatar = document.createElement('div');
+      avatar.classList.add('w-10', 'h-10', 'font-bold', 'rounded-full', 'flex', 'items-center', 'justify-center', 'select-none', 'shadow-lg');
+      if (isSentByCurrentUser) {
+        avatar.classList.add('bg-indigo-500', 'text-white');
+        avatar.title = 'You';
+        avatar.textContent = currentUserInitial;
+      } else {
+        avatar.classList.add('bg-gray-700', 'text-gray-200');
+        avatar.title = chatUserName;
+        avatar.textContent = chatUserInitial;
+      }
+
+      const bubble = document.createElement('div');
+      bubble.classList.add('relative', 'rounded-2xl', 'px-5', 'py-3', 'text-sm', 'shadow-md', 'border', 'border-gray-800');
+      bubble.classList.add(isSentByCurrentUser ? 'bg-indigo-600' : 'bg-gray-800');
+      bubble.classList.add('text-white');
+      bubble.style.wordBreak = 'break-word';
+
+      const messageText = document.createElement('div');
+      messageText.textContent = data.message;
+
+      const timestamp = document.createElement('div');
+      timestamp.classList.add('text-xs', 'mt-1', 'opacity-60', 'italic', 'select-none');
+      const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      timestamp.textContent = time;
+
+      bubble.appendChild(messageText);
+      bubble.appendChild(timestamp);
+
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(bubble);
+      messageContainer.appendChild(wrapper);
+
+      requestAnimationFrame(scrollToBottomInstant);
+    }
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      socket.emit('chatMessage', {
+        senderId: currentUserId,
+        receiverId: chatUserId,
+        message
+      });
+
+      messageInput.value = '';
+      messageInput.focus();
+    });
+
+    socket.on('message', (data) => {
+      if (
+        (data.sender === currentUserId && data.receiver === chatUserId) ||
+        (data.sender === chatUserId && data.receiver === currentUserId)
+      ) {
+        appendMessage(data);
+      }
+    });
+
+    window.addEventListener('load', scrollToBottomInstant);
+  </script>
+
+  <style>
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.3s ease forwards;
+    }
+  </style>
 </body>
+
 </html>
