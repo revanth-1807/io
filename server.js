@@ -16,6 +16,8 @@ const Chat=require('./models/Chat');
 const path = require('path');
 dayjs.extend(utc);
 dayjs.extend(timezone);
+const nodemailer = require("nodemailer");
+
 
 const User=require('./models/User')
 const store=new Mongodbstore({
@@ -26,7 +28,7 @@ const store=new Mongodbstore({
 store.on('error',function(error){
     console.log('Session store error',error);
 })
-
+let otpStore = {};
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
@@ -66,7 +68,9 @@ app.get('/login',(req,res)=>{
 app.get('/register',(req,res)=>{
     res.render('register');
 })
-
+app.get('/verify-otp',(req,res)=>{
+    res.render('verify-otp');
+})
 
 app.get('/logout',(req,res)=>{
     req.session.destroy((err)=>{
@@ -91,40 +95,98 @@ mongoose.connect(process.env.MONGODB_URI
     console.log('Database connection failed', err);
 })
 
-app.post('/register', async (req, res) => {
+
+// ✅ Create transporter once
+const transporter = nodemailer.createTransport({
+  service: "gmail",  // or "hotmail", "yahoo", or SMTP config
+  auth: {
+    user: process.env.EMAIL,   // your email
+    pass: process.env.EMAIL_PASS // your app password
+  }
+});
+
+app.post("/register", async (req, res) => {
   try {
     const { Name, Email, Password, ConfirmPassword } = req.body;
 
     if (Password !== ConfirmPassword) {
-      return res.send(
-        '<script>alert("Passwords do not match");window.location="/register";</script>'
-      );
+      return res.send('<script>alert("Passwords do not match");window.location="/register";</script>');
     }
 
     const existingUser = await User.findOne({ Email });
     if (existingUser) {
-      return res.send(
-        '<script>alert("Email already registered");window.location="/register";</script>'
-      );
+      return res.send('<script>alert("Email already registered");window.location="/register";</script>');
     }
 
     const hashedPassword = await bcrypt.hash(Password, 10);
 
-    const newUser = new User({
+    // ✅ Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // ✅ Store in temporary memory
+    otpStore[Email] = {
       Name,
       Email,
       Password: hashedPassword,
+      otp,
+      expires: Date.now() + 10 * 60 * 1000
+    };
+    nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS, }, });
+
+    // ✅ Use transporter.sendMail, not nodemailer.sendMail
+    await transporter.sendMail({
+      from: `"EduSpace" <${process.env.EMAIL}>`,
+      to: Email,
+      subject: "Verify your Email - EduSpace",
+      html: `<h2>Hello ${Name},</h2>
+             <p>Your OTP for verification is: <b>${otp}</b></p>
+             <p>This OTP is valid for 10 minutes.</p>`
     });
-    await newUser.save();
-    res.render('login');
-}
-catch(err){
-    console.error('Error during registration:', err);
-    res.status(500).send(
-      '<script>alert("An error occurred during registration");window.location="/register";</script>'
-    );
+
+    res.render("verify-otp", { Email });
+
+  } catch (err) {
+    console.error(err);
+    res.send('<script>alert("Something went wrong, try again");window.location="/register";</script>');
   }
 });
+
+
+// Verify OTP Route
+app.post("/verify-otp", async (req, res) => {
+  try {
+    const { Email, otp } = req.body;
+    const record = otpStore[Email];
+
+    if (!record) {
+      return res.send('<script>alert("OTP expired or not found");window.location="/register";</script>');
+    }
+
+    if (record.otp !== otp || record.expires < Date.now()) {
+      return res.render("verify-otp", { Email });  // reload with email
+    }
+
+    // ✅ Save verified user to DB
+    const newUser = new User({
+      Name: record.Name,
+      Email: record.Email,
+      Password: record.Password,
+      verified: true
+    });
+    await newUser.save();
+
+    // Clear temp OTP
+    delete otpStore[Email];
+
+    res.send('<script>alert("Email verified successfully! Please login.");window.location="/login";</script>');
+  } catch (err) {
+    console.error(err);
+    res.send('<script>alert("Verification failed");window.location="/verify-otp";</script>');
+  }
+});
+
+
+
 
 app.post('/login', async (req, res) => {
   try {
