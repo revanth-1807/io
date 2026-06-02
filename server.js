@@ -131,7 +131,7 @@ app.post("/register", async (req, res) => {
       otp,
       expires: Date.now() + 10 * 60 * 1000
     };
-    nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS, }, });
+    // nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS, }, });
 
     // ✅ Use transporter.sendMail, not nodemailer.sendMail
     await transporter.sendMail({
