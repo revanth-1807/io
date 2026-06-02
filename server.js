@@ -28,7 +28,6 @@ const store=new Mongodbstore({
 store.on('error',function(error){
     console.log('Session store error',error);
 })
-let otpStore = {};
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
@@ -69,7 +68,7 @@ app.get('/register',(req,res)=>{
     res.render('register');
 })
 app.get('/verify-otp',(req,res)=>{
-    res.render('verify-otp');
+    res.render('verify-otp', { Email: req.session.pendingRegistration?.Email || '' });
 })
 
 app.get('/logout',(req,res)=>{
@@ -124,14 +123,13 @@ app.post("/register", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // ✅ Store in temporary memory
-    otpStore[Email] = {
+    req.session.pendingRegistration = {
       Name,
       Email,
       Password: hashedPassword,
       otp,
       expires: Date.now() + 10 * 60 * 1000
     };
-    // nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASS, }, });
 
     // ✅ Use transporter.sendMail, not nodemailer.sendMail
     await transporter.sendMail({
@@ -141,6 +139,13 @@ app.post("/register", async (req, res) => {
       html: `<h2>Hello ${Name},</h2>
              <p>Your OTP for verification is: <b>${otp}</b></p>
              <p>This OTP is valid for 10 minutes.</p>`
+    });
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) return reject(err);
+        resolve();
+      });
     });
 
     res.render("verify-otp", { Email });
@@ -156,9 +161,9 @@ app.post("/register", async (req, res) => {
 app.post("/verify-otp", async (req, res) => {
   try {
     const { Email, otp } = req.body;
-    const record = otpStore[Email];
+    const record = req.session.pendingRegistration;
 
-    if (!record) {
+    if (!record || record.Email !== Email) {
       return res.send('<script>alert("OTP expired or not found");window.location="/register";</script>');
     }
 
@@ -176,7 +181,13 @@ app.post("/verify-otp", async (req, res) => {
     await newUser.save();
 
     // Clear temp OTP
-    delete otpStore[Email];
+    delete req.session.pendingRegistration;
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
 
     res.send('<script>alert("Email verified successfully! Please login.");window.location="/login";</script>');
   } catch (err) {
